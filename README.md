@@ -22,7 +22,7 @@ Or open in Android Studio: `File → Open → select project root`, then run the
 
 ### iOS
 
-**Requirements:** Xcode 14.2 or newer, iOS 16+ simulator or device.
+**Requirements:** Xcode 14.2, iOS 16.2 simulator or device. Note: not tested on newer versions of Xcode or iOS.
 
 1. Open `DeviceConnectivity.xcworkspace` (not the `.xcodeproj` directly).
 2. Select the `Demo` scheme.
