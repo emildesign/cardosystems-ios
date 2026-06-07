@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Workspace
+   version = "1.0">
+   <Group
+      location = "group:Demo"
+      name = "Demo">
+      <FileRef
+         location = "group:Demo.xcodeproj">
+      </FileRef>
+      <Group
+         location = "group:Demo"
+         name = "Demo">
+         <Group
+            location = "group:Assets.xcassets"
+            name = "Assets.xcassets">
+            <Group
+               location = "group:AppIcon.appiconset"
+               name = "AppIcon.appiconset">
+               <FileRef
+                  location = "group:Contents.json">
+               </FileRef>
+            </Group>
+            <Group
+               location = "group:AccentColor.colorset"
+               name = "AccentColor.colorset">
+               <FileRef
+                  location = "group:Contents.json">
+               </FileRef>
+            </Group>
+            <FileRef
+               location = "group:Contents.json">
+            </FileRef>
+         </Group>
+         <Group
+            location = "group:Preview Content"
+            name = "Preview Content">
+            <Group
+               location = "group:Preview Assets.xcassets"
+               name = "Preview Assets.xcassets">
+               <FileRef
+                  location = "group:Contents.json">
+               </FileRef>
+            </Group>
+         </Group>
+         <FileRef
+            location = "group:DemoApp.swift">
+         </FileRef>
+         <FileRef
+            location = "group:ContentView.swift">
+         </FileRef>
+      </Group>
+   </Group>
+   <Group
+      location = "group:DeviceConnectivitySDK"
+      name = "DeviceConnectivitySDK">
+      <Group
+         location = "group:DeviceConnectivitySDKTests"
+         name = "DeviceConnectivitySDKTests">
+         <FileRef
+            location = "group:DeviceConnectivitySDKTests.swift">
+         </FileRef>
+      </Group>
+      <FileRef
+         location = "group:DeviceConnectivitySDK.xcodeproj">
+      </FileRef>
+      <Group
+         location = "group:DeviceConnectivitySDK"
+         name = "DeviceConnectivitySDK">
+         <FileRef
+            location = "group:DeviceConnectivitySDK.h">
+         </FileRef>
+         <Group
+            location = "group:Sources"
+            name = "Sources">
+            <FileRef
+               location = "group:DeviceConnectorImpl.swift">
+            </FileRef>
+            <Group
+               location = "group:api"
+               name = "api">
+               <FileRef
+                  location = "group:DeviceConnector.swift">
+               </FileRef>
+            </Group>
+            <Group
+               location = "group:data"
+               name = "data">
+               <Group
+                  location = "group:transport"
+                  name = "transport">
+                  <FileRef
+                     location = "group:MockDeviceTransport.swift">
+                  </FileRef>
+                  <FileRef
+                     location = "group:DeviceTransport.swift">
+                  </FileRef>
+                  <Group
+                     location = "group:model"
+                     name = "model">
+                     <FileRef
+                        location = "group:DeviceCommand.swift">
+                     </FileRef>
+                     <FileRef
+                        location = "group:TransportEvent.swift">
+                     </FileRef>
+                  </Group>
+               </Group>
+            </Group>
+            <Group
+               location = "group:domain"
+               name = "domain">
+               <Group
+                  location = "group:model"
+                  name = "model">
+                  <FileRef
+                     location = "group:ConnectionState.swift">
+                  </FileRef>
+                  <FileRef
+                     location = "group:DisconnectReason.swift">
+                  </FileRef>
+                  <FileRef
+                     location = "group:DeviceData.swift">
+                  </FileRef>
+               </Group>
+            </Group>
+         </Group>
+      </Group>
+   </Group>
+</Workspace>
