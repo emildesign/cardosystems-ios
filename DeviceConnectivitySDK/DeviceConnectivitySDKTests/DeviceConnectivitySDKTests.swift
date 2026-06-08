@@ -23,6 +23,7 @@ final class DeviceConnectivitySDKTests: XCTestCase {
     private func collectStates(
         from connector: any DeviceConnector,
         count: Int,
+        drainMs: UInt64 = 200,
         during block: () async -> Void
     ) async -> [ConnectionState] {
         actor StateCollector {
@@ -39,7 +40,7 @@ final class DeviceConnectivitySDKTests: XCTestCase {
             }
         }
         await block()
-        try? await Task.sleep(nanoseconds: 50_000_000)
+        try? await Task.sleep(nanoseconds: drainMs * 1_000_000)
         task.cancel()
         return await collector.all()
     }
@@ -50,6 +51,59 @@ final class DeviceConnectivitySDKTests: XCTestCase {
         let connector = makeConnector(transport: FakeTransport())
         let state = await connector.connectionState.values.first(where: { _ in true })
         XCTAssertEqual(state, .idle)
+    }
+
+    func testGivenIdle_whenConnectCalled_thenTransitionsToConnected() async {
+        let transport = FakeTransport()
+        let connector = makeConnector(transport: transport)
+        let states = await collectStates(from: connector, count: 2) {
+            await connector.connect(deviceId: "device-01")
+            await transport.emit(.connected)
+        }
+        XCTAssertTrue(states.contains(.connecting), "States: \(states)")
+        XCTAssertTrue(states.contains(.connected(deviceId: "device-01")), "States: \(states)")
+    }
+
+    func testGivenConnecting_whenTimeoutReceived_thenTransitionsToFailed() async {
+        let transport = FakeTransport()
+        let connector = makeConnector(transport: transport)
+        let states = await collectStates(from: connector, count: 2) {
+            await connector.connect(deviceId: "device-01")
+            await transport.emit(.disconnected(.timeout))
+        }
+        XCTAssertTrue(states.contains(.failed(.timeout)), "States: \(states)")
+    }
+
+    func testGivenConnected_whenUnexpectedDisconnect_thenTransitionsToFailed() async {
+        let transport = FakeTransport()
+        let connector = makeConnector(transport: transport)
+        let states = await collectStates(from: connector, count: 3) {
+            await connector.connect(deviceId: "device-01")
+            await transport.emit(.connected)
+            try? await Task.sleep(nanoseconds: 10_000_000)
+            await transport.emit(.disconnected(.unexpectedDisconnect))
+        }
+        XCTAssertTrue(states.contains(.failed(.unexpectedDisconnect)), "States: \(states)")
+    }
+
+    func testGivenConnected_whenDisconnectCalled_thenTransitionsToIdle() async {
+        let transport = FakeTransport()
+        let connector = makeConnector(transport: transport)
+        let states = await collectStates(from: connector, count: 4, drainMs: 500) {
+            await connector.connect(deviceId: "device-01")
+            await transport.emit(.connected)
+            try? await Task.sleep(nanoseconds: 50_000_000)
+            await connector.disconnect()
+            try? await Task.sleep(nanoseconds: 50_000_000)
+            await transport.emit(.disconnected(.consumerDisconnected))
+            try? await Task.sleep(nanoseconds: 50_000_000)
+        }
+        guard states.count >= 4 else {
+            XCTFail("Expected 4 states but got \(states.count): \(states)")
+            return
+        }
+        XCTAssertEqual(states[2], .disconnecting)
+        XCTAssertEqual(states[3], .idle)
     }
 
     func testGivenConnected_whenDataUpdateReceived_thenDeviceDataUpdated() async {
@@ -74,7 +128,7 @@ final class DeviceConnectivitySDKTests: XCTestCase {
         await transport.emit(.connected)
         try? await Task.sleep(nanoseconds: 10_000_000)
         await transport.emit(.dataUpdate(DeviceData(volume: 7, battery: 80)))
-        try? await Task.sleep(nanoseconds: 50_000_000)
+        try? await Task.sleep(nanoseconds: 100_000_000)
         task.cancel()
         let lastData = await collector.last()
         XCTAssertEqual(lastData, DeviceData(volume: 7, battery: 80))
@@ -95,11 +149,55 @@ final class DeviceConnectivitySDKTests: XCTestCase {
         XCTAssertEqual(count, 1)
     }
 
+    func testGivenConnected_whenDisconnected_thenDeviceDataCleared() async {
+        let transport = FakeTransport()
+        let connector = makeConnector(transport: transport)
+        await connector.connect(deviceId: "device-01")
+        await transport.emit(.connected)
+        await transport.emit(.dataUpdate(DeviceData(volume: 5, battery: 70)))
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        await connector.disconnect()
+        await transport.emit(.disconnected(.consumerDisconnected))
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        // Collect the current value directly — after disconnect deviceData should be nil
+        var currentData: DeviceData? = DeviceData(volume: 0, battery: 0) // non-nil sentinel
+        let task = Task {
+            for await data in connector.deviceData.values {
+                currentData = data
+                break // take first emission only
+            }
+        }
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        task.cancel()
+        XCTAssertNil(currentData, "Expected deviceData to be nil after disconnect but got \(String(describing: currentData))")
+    }
+
+    func testGivenConnector_whenReleased_thenEventListenerCancelled() async {
+        let transport = FakeTransport()
+        let connector = makeConnector(transport: transport)
+        await connector.connect(deviceId: "device-01")
+        await transport.emit(.connected)
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        connector.release()
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        await transport.emit(.dataUpdate(DeviceData(volume: 10, battery: 100)))
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        var currentData: DeviceData? = DeviceData(volume: 0, battery: 0)
+        let task = Task {
+            for await data in connector.deviceData.values {
+                currentData = data
+                break
+            }
+        }
+        try? await Task.sleep(nanoseconds: 100_000_000)
+        task.cancel()
+        XCTAssertNil(currentData, "Expected deviceData to be nil after release but got \(String(describing: currentData))")
+    }
 
     func testGivenMockTransport_whenSuccess_thenConnects() async {
         let transport = MockDeviceTransport(scenario: .success)
         let connector = makeConnector(transport: transport)
-        let states = await collectStates(from: connector, count: 3) {
+        let states = await collectStates(from: connector, count: 3, drainMs: 500) {
             await connector.connect(deviceId: "device-01")
             try? await Task.sleep(nanoseconds: 1_500_000_000)
         }
