@@ -10,16 +10,14 @@ public protocol DeviceConnector: AnyObject {
     func release()
 }
 
-@MainActor public func makeDeviceConnector() -> any DeviceConnector {
+/// Production factory — use this in your ViewModel.
+@MainActor
+public func makeDeviceConnector() -> any DeviceConnector {
     DeviceConnectorImpl()
 }
-
-
-public extension DeviceConnector {
-//    @MainActor internal static func create() -> any DeviceConnector { DeviceConnectorImpl() }
-    @MainActor internal static func createWithTransport(_ transport: any DeviceTransport) -> any DeviceConnector {
-        DeviceConnectorImpl(transport: transport)
-    }
+ 
+/// Test factory — inject a custom transport (e.g. FakeTransport).
+@MainActor
+func makeDeviceConnectorWithTransport(_ transport: any DeviceTransport) -> any DeviceConnector {
+    DeviceConnectorImpl(transport: transport)
 }
-
-
