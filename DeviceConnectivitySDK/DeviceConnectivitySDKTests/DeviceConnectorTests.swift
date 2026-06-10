@@ -1,5 +1,5 @@
 //
-//  DeviceConnectivitySDKTests.swift
+//  DeviceConnectorTests.swift
 //  DeviceConnectivitySDKTests
 //
 //  Created by Emil Adz on 07/06/2026.
@@ -9,7 +9,7 @@ import XCTest
 @testable import DeviceConnectivitySDK
 
 @MainActor
-final class DeviceConnectivitySDKTests: XCTestCase {
+final class DeviceConnectorTests: XCTestCase {
 
     override func setUpWithError() throws {}
     override func tearDownWithError() throws {}
@@ -45,7 +45,7 @@ final class DeviceConnectivitySDKTests: XCTestCase {
         return await collector.all()
     }
 
-    // MARK: - Tests
+    // MARK: - Lifecycle Tests
 
     func testGivenNewConnector_thenInitialStateIsIdle() async {
         let connector = makeConnector(transport: FakeTransport())
@@ -74,7 +74,7 @@ final class DeviceConnectivitySDKTests: XCTestCase {
         XCTAssertTrue(states.contains(.failed(.timeout)), "States: \(states)")
     }
 
-    func testGivenConnected_whenUnexpectedDisconnect_thenTransitionsToFailed() async {
+    func testGivenConnected_whenUnexpectedDisconnectReceived_thenTransitionsToFailedAndClearsData() async {
         let transport = FakeTransport()
         let connector = makeConnector(transport: transport)
         let states = await collectStates(from: connector, count: 3) {
@@ -86,7 +86,7 @@ final class DeviceConnectivitySDKTests: XCTestCase {
         XCTAssertTrue(states.contains(.failed(.unexpectedDisconnect)), "States: \(states)")
     }
 
-    func testGivenConnected_whenDisconnectCalled_thenTransitionsToIdle() async {
+    func testGivenConnected_whenDisconnectCalled_thenTransitionsToIdleAfterTransportEvent() async {
         let transport = FakeTransport()
         let connector = makeConnector(transport: transport)
         let states = await collectStates(from: connector, count: 4, drainMs: 500) {
@@ -106,7 +106,33 @@ final class DeviceConnectivitySDKTests: XCTestCase {
         XCTAssertEqual(states[3], .idle)
     }
 
-    func testGivenConnected_whenDataUpdateReceived_thenDeviceDataUpdated() async {
+    func testGivenFailedState_whenConnectCalled_thenCanReconnectSuccessfully() async {
+        let transport = FakeTransport()
+        let connector = makeConnector(transport: transport)
+
+        // 1. Fail first
+        let states = await collectStates(from: connector, count: 2) {
+            await connector.connect(deviceId: "device-01")
+            await transport.emit(.disconnected(.timeout))
+        }
+        XCTAssertTrue(states.contains(.failed(.timeout)), "Should have reached failed state: \(states)")
+
+        // 2. Retry — give collector task time to start before emitting .connected
+        let reconnectStates = await collectStates(from: connector, count: 2, drainMs: 300) {
+            await connector.connect(deviceId: "device-01")
+            try? await Task.sleep(nanoseconds: 50_000_000) // wait for collector to be ready
+            await transport.emit(.connected)
+            try? await Task.sleep(nanoseconds: 50_000_000) // wait for state to propagate
+        }
+        XCTAssertTrue(
+            reconnectStates.contains(.connected(deviceId: "device-01")),
+            "Should reconnect successfully: \(reconnectStates)"
+        )
+    }
+
+    // MARK: - Data & Commands Tests
+
+    func testGivenConnected_whenDataUpdateReceived_thenDeviceDataIsUpdated() async {
         let transport = FakeTransport()
         let connector = makeConnector(transport: transport)
 
@@ -140,7 +166,34 @@ final class DeviceConnectivitySDKTests: XCTestCase {
         if case .success = result { XCTFail("Expected failure") }
     }
 
-    func testGivenConnecting_whenConnectCalledAgain_thenNoOp() async {
+    func testGivenConnected_whenMultipleVolumeCommandsSentRapidly_thenProcessedSequentially() async {
+        let transport = FakeTransport()
+        let connector = makeConnector(transport: transport)
+
+        await connector.connect(deviceId: "device-01")
+        await transport.emit(.connected)
+        try? await Task.sleep(nanoseconds: 50_000_000)
+
+        // Send 5 volume commands concurrently
+        await withTaskGroup(of: Void.self) { group in
+            for vol in 1...5 {
+                group.addTask { await connector.setVolume(level: vol) }
+            }
+        }
+        try? await Task.sleep(nanoseconds: 100_000_000)
+
+        let commandCount = await transport.sentCommands.count
+        XCTAssertEqual(commandCount, 5, "All 5 commands should have been processed")
+
+        let last = await transport.lastCommand
+        if case .setVolume(let level) = last {
+            XCTAssertTrue((1...5).contains(level))
+        } else {
+            XCTFail("Last command should be setVolume")
+        }
+    }
+
+    func testGivenConnecting_whenConnectCalledAgain_thenSecondCallIsNoOp() async {
         let transport = FakeTransport()
         let connector = makeConnector(transport: transport)
         await connector.connect(deviceId: "device-01")
@@ -149,7 +202,7 @@ final class DeviceConnectivitySDKTests: XCTestCase {
         XCTAssertEqual(count, 1)
     }
 
-    func testGivenConnected_whenDisconnected_thenDeviceDataCleared() async {
+    func testGivenConnected_whenDisconnected_thenDeviceDataIsCleared() async {
         let transport = FakeTransport()
         let connector = makeConnector(transport: transport)
         await connector.connect(deviceId: "device-01")
@@ -159,12 +212,11 @@ final class DeviceConnectivitySDKTests: XCTestCase {
         await connector.disconnect()
         await transport.emit(.disconnected(.consumerDisconnected))
         try? await Task.sleep(nanoseconds: 100_000_000)
-        // Collect the current value directly — after disconnect deviceData should be nil
-        var currentData: DeviceData? = DeviceData(volume: 0, battery: 0) // non-nil sentinel
+        var currentData: DeviceData? = DeviceData(volume: 0, battery: 0)
         let task = Task {
             for await data in connector.deviceData.values {
                 currentData = data
-                break // take first emission only
+                break
             }
         }
         try? await Task.sleep(nanoseconds: 100_000_000)
@@ -172,7 +224,7 @@ final class DeviceConnectivitySDKTests: XCTestCase {
         XCTAssertNil(currentData, "Expected deviceData to be nil after disconnect but got \(String(describing: currentData))")
     }
 
-    func testGivenConnector_whenReleased_thenEventListenerCancelled() async {
+    func testGivenConnector_whenReleased_thenInternalScopeIsCancelled() async {
         let transport = FakeTransport()
         let connector = makeConnector(transport: transport)
         await connector.connect(deviceId: "device-01")
@@ -194,7 +246,7 @@ final class DeviceConnectivitySDKTests: XCTestCase {
         XCTAssertNil(currentData, "Expected deviceData to be nil after release but got \(String(describing: currentData))")
     }
 
-    func testGivenMockTransport_whenSuccess_thenConnects() async {
+    func testGivenMockTransport_whenSuccessScenario_thenConnectsSuccessfully() async {
         let transport = MockDeviceTransport(scenario: .success)
         let connector = makeConnector(transport: transport)
         let states = await collectStates(from: connector, count: 3, drainMs: 500) {
@@ -203,25 +255,4 @@ final class DeviceConnectivitySDKTests: XCTestCase {
         }
         XCTAssertTrue(states.contains(where: { if case .connected = $0 { return true }; return false }))
     }
-}
-
-// MARK: - FakeTransport
-
-actor FakeTransport: DeviceTransport {
-    private let continuation: AsyncStream<TransportEvent>.Continuation
-    nonisolated let events: AsyncStream<TransportEvent>
-    var connectCallCount = 0
-    var disconnectCallCount = 0
-    var lastCommand: DeviceCommand?
-
-    init() {
-        var cont: AsyncStream<TransportEvent>.Continuation!
-        self.events = AsyncStream { cont = $0 }
-        self.continuation = cont
-    }
-
-    func emit(_ event: TransportEvent) { continuation.yield(event) }
-    func connect(deviceId: String) async { connectCallCount += 1 }
-    func disconnect() async { disconnectCallCount += 1 }
-    func sendCommand(_ command: DeviceCommand) async { lastCommand = command }
 }

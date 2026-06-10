@@ -8,7 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		60345B472FD5F27B00297D81 /* DeviceConnectivitySDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 60345B3E2FD5F27B00297D81 /* DeviceConnectivitySDK.framework */; };
-		60345B4C2FD5F27B00297D81 /* DeviceConnectivitySDKTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60345B4B2FD5F27B00297D81 /* DeviceConnectivitySDKTests.swift */; };
+		DC069E31325E4DBE9E5B2EF1 /* DeviceConnectorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86417D7EE1A94C8BBD42FA55 /* DeviceConnectorTests.swift */; };
+		AF9CD0801A7F4556B2F728A8 /* FakeTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A71A8F619734019BA436A10 /* FakeTransport.swift */; };
 		60345B4D2FD5F27B00297D81 /* DeviceConnectivitySDK.h in Headers */ = {isa = PBXBuildFile; fileRef = 60345B412FD5F27B00297D81 /* DeviceConnectivitySDK.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		60345B662FD5F2CE00297D81 /* DeviceConnectorImpl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60345B572FD5F2CE00297D81 /* DeviceConnectorImpl.swift */; };
 		60345B672FD5F2CE00297D81 /* DeviceConnectorImpl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60345B572FD5F2CE00297D81 /* DeviceConnectorImpl.swift */; };
@@ -44,7 +45,8 @@
 		60345B3E2FD5F27B00297D81 /* DeviceConnectivitySDK.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = DeviceConnectivitySDK.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		60345B412FD5F27B00297D81 /* DeviceConnectivitySDK.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DeviceConnectivitySDK.h; sourceTree = "<group>"; };
 		60345B462FD5F27B00297D81 /* DeviceConnectivitySDKTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DeviceConnectivitySDKTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		60345B4B2FD5F27B00297D81 /* DeviceConnectivitySDKTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceConnectivitySDKTests.swift; sourceTree = "<group>"; };
+		86417D7EE1A94C8BBD42FA55 /* DeviceConnectorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceConnectorTests.swift; sourceTree = "<group>"; };
+		8A71A8F619734019BA436A10 /* FakeTransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FakeTransport.swift; sourceTree = "<group>"; };
 		60345B572FD5F2CE00297D81 /* DeviceConnectorImpl.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DeviceConnectorImpl.swift; sourceTree = "<group>"; };
 		60345B592FD5F2CE00297D81 /* DeviceConnector.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DeviceConnector.swift; sourceTree = "<group>"; };
 		60345B5C2FD5F2CE00297D81 /* MockDeviceTransport.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MockDeviceTransport.swift; sourceTree = "<group>"; };
@@ -105,7 +107,8 @@
 		60345B4A2FD5F27B00297D81 /* DeviceConnectivitySDKTests */ = {
 			isa = PBXGroup;
 			children = (
-				60345B4B2FD5F27B00297D81 /* DeviceConnectivitySDKTests.swift */,
+				86417D7EE1A94C8BBD42FA55 /* DeviceConnectorTests.swift */,
+				8A71A8F619734019BA436A10 /* FakeTransport.swift */,
 			);
 			path = DeviceConnectivitySDKTests;
 			sourceTree = "<group>";
@@ -303,7 +306,8 @@
 				60345B752FD5F2CE00297D81 /* DisconnectReason.swift in Sources */,
 				60345B732FD5F2CE00297D81 /* ConnectionState.swift in Sources */,
 				60345B6D2FD5F2CE00297D81 /* DeviceTransport.swift in Sources */,
-				60345B4C2FD5F27B00297D81 /* DeviceConnectivitySDKTests.swift in Sources */,
+				DC069E31325E4DBE9E5B2EF1 /* DeviceConnectorTests.swift in Sources */,
+				AF9CD0801A7F4556B2F728A8 /* FakeTransport.swift in Sources */,
 				60345B772FD5F2CE00297D81 /* DeviceData.swift in Sources */,
 				60345B6F2FD5F2CE00297D81 /* DeviceCommand.swift in Sources */,
 				60345B672FD5F2CE00297D81 /* DeviceConnectorImpl.swift in Sources */,

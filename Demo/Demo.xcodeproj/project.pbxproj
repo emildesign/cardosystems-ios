@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		60345B852FD5F31D00297D81 /* DemoApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60345B842FD5F31D00297D81 /* DemoApp.swift */; };
-		60345B872FD5F31D00297D81 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60345B862FD5F31D00297D81 /* ContentView.swift */; };
 		60345B892FD5F31E00297D81 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 60345B882FD5F31E00297D81 /* Assets.xcassets */; };
 		60345B8C2FD5F31E00297D81 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 60345B8B2FD5F31E00297D81 /* Preview Assets.xcassets */; };
 		60345B962FD5F3E900297D81 /* DeviceConnectivitySDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 60345B952FD5F3E900297D81 /* DeviceConnectivitySDK.framework */; };
@@ -39,7 +38,6 @@
 /* Begin PBXFileReference section */
 		60345B812FD5F31D00297D81 /* Demo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Demo.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		60345B842FD5F31D00297D81 /* DemoApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DemoApp.swift; sourceTree = "<group>"; };
-		60345B862FD5F31D00297D81 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		60345B882FD5F31E00297D81 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		60345B8B2FD5F31E00297D81 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		60345B932FD5F3D600297D81 /* DeviceConnectivitySDK.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = DeviceConnectivitySDK.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -87,7 +85,6 @@
 			children = (
 				60345BBB2FD5FA7900297D81 /* Presentation */,
 				60345B842FD5F31D00297D81 /* DemoApp.swift */,
-				60345B862FD5F31D00297D81 /* ContentView.swift */,
 				60345B882FD5F31E00297D81 /* Assets.xcassets */,
 				60345B8A2FD5F31E00297D81 /* Preview Content */,
 			);
@@ -214,7 +211,6 @@
 			files = (
 				60345BC62FD5FA7900297D81 /* DeviceControlViewModel.swift in Sources */,
 				60345BCB2FD5FA7900297D81 /* Card.swift in Sources */,
-				60345B872FD5F31D00297D81 /* ContentView.swift in Sources */,
 				60345BC92FD5FA7900297D81 /* BatteryCard.swift in Sources */,
 				60345BC52FD5FA7900297D81 /* DeviceControlScreen.swift in Sources */,
 				60345B852FD5F31D00297D81 /* DemoApp.swift in Sources */,

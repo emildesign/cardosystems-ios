@@ -57,7 +57,10 @@
          location = "group:DeviceConnectivitySDKTests"
          name = "DeviceConnectivitySDKTests">
          <FileRef
-            location = "group:DeviceConnectivitySDKTests.swift">
+            location = "group:DeviceConnectorTests.swift">
+         </FileRef>
+         <FileRef
+            location = "group:FakeTransport.swift">
          </FileRef>
       </Group>
       <FileRef
