@@ -50,11 +50,16 @@ final class DeviceConnectorImpl: DeviceConnector {
     }
 
     func release() {
-        Task { await disconnect(); eventListenerTask?.cancel() }
+        Task {
+            await disconnect();
+            eventListenerTask?.cancel()
+            eventListenerTask = nil
+        }
     }
 
     private func startListeningToTransport() {
-        eventListenerTask?.cancel()
+        //eventListenerTask?.cancel()
+        guard eventListenerTask == nil else { return }
         eventListenerTask = Task { [weak self] in
             guard let self else { return }
             for await event in self.transport.events {
@@ -70,7 +75,7 @@ final class DeviceConnectorImpl: DeviceConnector {
         case .disconnected(let reason):
             _connectionState.send(reason == .consumerDisconnected ? .idle : .failed(reason))
             _deviceData.send(nil)
-            eventListenerTask?.cancel()
+//            eventListenerTask?.cancel()
         case .dataUpdate(let data):
             if case .connected = _connectionState.value { _deviceData.send(data) }
         }
