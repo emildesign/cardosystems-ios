@@ -1,6 +1,7 @@
 // DeviceControlScreen.swift
 import DeviceConnectivitySDK
 import SwiftUI
+
 struct DeviceControlScreen: View {
     @StateObject private var viewModel = DeviceControlViewModel()
     private var isConnected: Bool { if case .connected = viewModel.connectionState { return true }; return false }

@@ -15,7 +15,7 @@ public protocol DeviceConnector {
 public func makeDeviceConnector() -> any DeviceConnector {
     DeviceConnectorImpl()
 }
- 
+
 /// Test factory — inject a custom transport (e.g. FakeTransport).
 @MainActor
 func makeDeviceConnectorWithTransport(_ transport: any DeviceTransport) -> any DeviceConnector {

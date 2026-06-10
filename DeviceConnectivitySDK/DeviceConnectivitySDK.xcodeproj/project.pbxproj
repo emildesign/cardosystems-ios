@@ -7,9 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		602844502FD9F9B2002DF4F0 /* DeviceConnectorError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6028444F2FD9F9B2002DF4F0 /* DeviceConnectorError.swift */; };
+		602844512FD9F9B2002DF4F0 /* DeviceConnectorError.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6028444F2FD9F9B2002DF4F0 /* DeviceConnectorError.swift */; };
 		60345B472FD5F27B00297D81 /* DeviceConnectivitySDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 60345B3E2FD5F27B00297D81 /* DeviceConnectivitySDK.framework */; };
-		DC069E31325E4DBE9E5B2EF1 /* DeviceConnectorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86417D7EE1A94C8BBD42FA55 /* DeviceConnectorTests.swift */; };
-		AF9CD0801A7F4556B2F728A8 /* FakeTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A71A8F619734019BA436A10 /* FakeTransport.swift */; };
 		60345B4D2FD5F27B00297D81 /* DeviceConnectivitySDK.h in Headers */ = {isa = PBXBuildFile; fileRef = 60345B412FD5F27B00297D81 /* DeviceConnectivitySDK.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		60345B662FD5F2CE00297D81 /* DeviceConnectorImpl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60345B572FD5F2CE00297D81 /* DeviceConnectorImpl.swift */; };
 		60345B672FD5F2CE00297D81 /* DeviceConnectorImpl.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60345B572FD5F2CE00297D81 /* DeviceConnectorImpl.swift */; };
@@ -29,6 +29,8 @@
 		60345B752FD5F2CE00297D81 /* DisconnectReason.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60345B642FD5F2CE00297D81 /* DisconnectReason.swift */; };
 		60345B762FD5F2CE00297D81 /* DeviceData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60345B652FD5F2CE00297D81 /* DeviceData.swift */; };
 		60345B772FD5F2CE00297D81 /* DeviceData.swift in Sources */ = {isa = PBXBuildFile; fileRef = 60345B652FD5F2CE00297D81 /* DeviceData.swift */; };
+		AF9CD0801A7F4556B2F728A8 /* FakeTransport.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A71A8F619734019BA436A10 /* FakeTransport.swift */; };
+		DC069E31325E4DBE9E5B2EF1 /* DeviceConnectorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86417D7EE1A94C8BBD42FA55 /* DeviceConnectorTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -42,11 +44,10 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		6028444F2FD9F9B2002DF4F0 /* DeviceConnectorError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceConnectorError.swift; sourceTree = "<group>"; };
 		60345B3E2FD5F27B00297D81 /* DeviceConnectivitySDK.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = DeviceConnectivitySDK.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		60345B412FD5F27B00297D81 /* DeviceConnectivitySDK.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DeviceConnectivitySDK.h; sourceTree = "<group>"; };
 		60345B462FD5F27B00297D81 /* DeviceConnectivitySDKTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DeviceConnectivitySDKTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		86417D7EE1A94C8BBD42FA55 /* DeviceConnectorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceConnectorTests.swift; sourceTree = "<group>"; };
-		8A71A8F619734019BA436A10 /* FakeTransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FakeTransport.swift; sourceTree = "<group>"; };
 		60345B572FD5F2CE00297D81 /* DeviceConnectorImpl.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DeviceConnectorImpl.swift; sourceTree = "<group>"; };
 		60345B592FD5F2CE00297D81 /* DeviceConnector.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DeviceConnector.swift; sourceTree = "<group>"; };
 		60345B5C2FD5F2CE00297D81 /* MockDeviceTransport.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = MockDeviceTransport.swift; sourceTree = "<group>"; };
@@ -56,6 +57,8 @@
 		60345B632FD5F2CE00297D81 /* ConnectionState.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ConnectionState.swift; sourceTree = "<group>"; };
 		60345B642FD5F2CE00297D81 /* DisconnectReason.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DisconnectReason.swift; sourceTree = "<group>"; };
 		60345B652FD5F2CE00297D81 /* DeviceData.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DeviceData.swift; sourceTree = "<group>"; };
+		86417D7EE1A94C8BBD42FA55 /* DeviceConnectorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceConnectorTests.swift; sourceTree = "<group>"; };
+		8A71A8F619734019BA436A10 /* FakeTransport.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FakeTransport.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -128,6 +131,7 @@
 			isa = PBXGroup;
 			children = (
 				60345B592FD5F2CE00297D81 /* DeviceConnector.swift */,
+				6028444F2FD9F9B2002DF4F0 /* DeviceConnectorError.swift */,
 			);
 			path = api;
 			sourceTree = "<group>";
@@ -292,6 +296,7 @@
 				60345B742FD5F2CE00297D81 /* DisconnectReason.swift in Sources */,
 				60345B6E2FD5F2CE00297D81 /* DeviceCommand.swift in Sources */,
 				60345B6C2FD5F2CE00297D81 /* DeviceTransport.swift in Sources */,
+				602844502FD9F9B2002DF4F0 /* DeviceConnectorError.swift in Sources */,
 				60345B682FD5F2CE00297D81 /* DeviceConnector.swift in Sources */,
 				60345B6A2FD5F2CE00297D81 /* MockDeviceTransport.swift in Sources */,
 				60345B762FD5F2CE00297D81 /* DeviceData.swift in Sources */,
@@ -304,6 +309,7 @@
 			files = (
 				60345B692FD5F2CE00297D81 /* DeviceConnector.swift in Sources */,
 				60345B752FD5F2CE00297D81 /* DisconnectReason.swift in Sources */,
+				602844512FD9F9B2002DF4F0 /* DeviceConnectorError.swift in Sources */,
 				60345B732FD5F2CE00297D81 /* ConnectionState.swift in Sources */,
 				60345B6D2FD5F2CE00297D81 /* DeviceTransport.swift in Sources */,
 				DC069E31325E4DBE9E5B2EF1 /* DeviceConnectorTests.swift in Sources */,

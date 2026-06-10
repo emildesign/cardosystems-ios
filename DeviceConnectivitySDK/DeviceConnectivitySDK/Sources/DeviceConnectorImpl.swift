@@ -2,10 +2,6 @@
 import Combine
 import Foundation
 
-public enum DeviceConnectorError: Error {
-    case illegalState(String)
-}
-
 @MainActor
 final class DeviceConnectorImpl: DeviceConnector {
 
