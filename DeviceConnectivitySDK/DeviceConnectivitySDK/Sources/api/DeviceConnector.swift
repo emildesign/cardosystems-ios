@@ -1,7 +1,7 @@
 // DeviceConnector.swift
 import Combine
 
-public protocol DeviceConnector: AnyObject {
+public protocol DeviceConnector {
     var connectionState: AnyPublisher<ConnectionState, Never> { get }
     var deviceData: AnyPublisher<DeviceData?, Never> { get }
     func connect(deviceId: String) async
