@@ -1,151 +1,131 @@
-# Device Connectivity SDK — Design Document
-
-> Written before implementation. Android is the primary reference. iOS differences are noted at the bottom.
+# Device Connectivity SDK — Design Document (iOS)
 
 ---
 
 ## Public API Surface
 
-The SDK exposes a single entry point: `DeviceConnector` (Android: interface, iOS: protocol).
+The SDK exposes a single entry point: `DeviceConnector`.
 The goal was to keep the surface as small as possible — if it's not needed by a consumer, it's not public.
 
-```kotlin
-// Android
-interface DeviceConnector {
-    val connectionState: StateFlow<ConnectionState>
-    val deviceData: StateFlow<DeviceData?>
-    suspend fun connect(deviceId: String)
-    suspend fun disconnect()
-    suspend fun setVolume(level: Int): Result<Unit>
-    fun release()
+```swift
+public protocol DeviceConnector {
+    var connectionState: AnyPublisher<ConnectionState, Never> { get }
+    var deviceData: AnyPublisher<DeviceData?, Never> { get }
+    func connect(deviceId: String) async
+    func disconnect() async
+    func setVolume(level: Int) async -> Result<Void, Error>
+    func release()
 }
 ```
 
 **Rationale per method:**
 
-- `connectionState` — always-available stream of the current lifecycle state. Starts as `Idle`.
+- `connectionState` — always-available publisher of the current lifecycle state. Backed by `CurrentValueSubject` so new subscribers immediately receive the current value without missing state.
 - `deviceData` — nullable because there is no data until the device sends its first update after connecting.
 - `connect(deviceId)` — suspends until the transport has processed the request. No-op if already connecting or connected.
 - `disconnect()` — suspends until teardown is complete. No-op if already idle or failed.
 - `setVolume(level)` — returns `Result` rather than throwing. A failure means the consumer called it at the wrong time (not connected), which is a recoverable situation not a crash.
-- `release()` — cleans up internal resources. Should be called when the consumer is done with the SDK (e.g. in `ViewModel.onCleared()`).
+- `release()` — cleans up internal tasks. Should be called when the consumer is done with the SDK (e.g. in `deinit` of the `ObservableObject`).
 
-**Why an interface/protocol instead of a concrete class:**
-It makes it easy to swap the real implementation for a test double without changing any consumer code. The consumer always holds `DeviceConnector`, never `DeviceConnectorImpl`.
+**Why a protocol instead of a concrete class:**
+It makes it easy to swap the real implementation for a test double without changing any consumer code. The consumer always holds `any DeviceConnector`, never `DeviceConnectorImpl`.
 
 **Factory:**
-```kotlin
-// Android
-val connector = DeviceConnector.create()
+```swift
+let connector = makeDeviceConnector()
 ```
-The implementation class (`DeviceConnectorImpl`) is `internal` — consumers cannot instantiate it directly.
+A free function is used instead of a static method on the protocol because Swift does not allow calling static methods on existential protocol types (`any DeviceConnector`). The implementation class (`DeviceConnectorImpl`) is `internal` — consumers cannot instantiate it directly.
+
+**Public types:**
+
+- `ConnectionState` — enum with five cases: `idle`, `connecting`, `connected(deviceId:)`, `disconnecting`, `failed(DisconnectReason)`.
+- `DeviceData` — struct with `volume: Int` (0–10) and `battery: Int` (0–100).
+- `DisconnectReason` — enum with `timeout`, `unexpectedDisconnect`, `consumerDisconnected`.
 
 ---
 
 ## Concurrency Model
 
-- All state updates are delivered on the **main thread** (`Dispatchers.Main.immediate` on Android).
-- `connect()`, `disconnect()`, and `setVolume()` are `suspend` functions — the caller controls which coroutine they run on.
-- Internal transport work (delays, simulated IO) runs on `Dispatchers.IO`.
-- The SDK holds a `CoroutineScope(SupervisorJob() + Dispatchers.Main)`. `SupervisorJob` means a failure in one child coroutine does not cancel the whole SDK scope.
-- `setVolume()` uses a `Mutex` to serialize concurrent calls — if two volume commands arrive at the same time, they are processed one after the other, not interleaved.
+- All publisher emissions are delivered on the **main thread** (`receive(on: DispatchQueue.main)`).
+- `connect()`, `disconnect()`, and `setVolume()` are `async` functions — the caller controls which context they run on.
+- `DeviceConnectorImpl` is marked `@MainActor` — all mutations to internal state are serialized on the main actor. Swift enforces this at compile time.
+- Internal transport work (delays, simulated IO) runs in detached `Task`s on the cooperative thread pool.
 
-**Concurrent calls:**
+**What happens on concurrent calls:**
 - `connect()` while already connecting or connected → no-op, guarded by state check.
 - `disconnect()` while idle or failed → no-op, guarded by state check.
-- Multiple `setVolume()` calls in parallel → serialized via `Mutex`.
+- Multiple `setVolume()` calls in parallel → serialized by `@MainActor` isolation. All calls hop to the main actor and are processed one at a time.
 
 ---
 
 ## Error Model
 
-Runtime errors are **state transitions**, not exceptions.
+Runtime errors are **state transitions**, not thrown errors.
 
-- `connect()` does not throw. A timeout or unexpected drop transitions state to `Failed(reason)`.
-- `setVolume()` returns `Result.failure` if called while not connected — this is a usage error the consumer should handle, but it should not crash the app.
-- There are no callbacks or error delegates on the public API. The consumer observes `connectionState` and reacts to `Failed`.
+- `connect()` does not throw. A timeout or unexpected drop transitions state to `.failed(reason)`.
+- `setVolume()` returns `.failure(DeviceConnectorError.illegalState(...))` if called while not connected — this is a usage error the consumer should handle, but it should not crash the app.
+- There are no delegates or completion callbacks on the public API. The consumer observes `connectionState` and reacts to `.failed`.
 
-**Why state transitions instead of exceptions:**
-Errors as state transitions are safer — the consumer reacts by observing state, not by catching exceptions in the right place. Missing a `try/catch` is silent; missing a `Failed` state in a `when` block produces a compiler warning.
+**Why state transitions instead of thrown errors:**
+Errors as state transitions are safer — the consumer reacts by observing state, not by catching errors in the right place. A missed `try/catch` is silent; a missed `.failed` case in a `switch` produces a compiler warning.
 
 ---
 
 ## State Model
 
 ```
-Idle ──connect()──► Connecting ──success──► Connected
+idle ──connect()──► connecting ──success──► connected
                         │                       │
                      timeout                disconnect()
                      or error                    │
                         │                        ▼
-                        └──────────────► Disconnecting ──► Idle
+                        └──────────────► disconnecting ──► idle
                         │
                         ▼
-                      Failed
+                      failed
                         │
                      connect()
                         ▼
-                     Connecting
+                     connecting
 ```
 
 **Legal transitions:**
 
-| From          | To            | Trigger                      |
-|---------------|---------------|------------------------------|
-| Idle          | Connecting    | `connect()`                  |
-| Connecting    | Connected     | transport success            |
-| Connecting    | Failed        | timeout / transport error    |
-| Connected     | Disconnecting | `disconnect()`               |
-| Connected     | Failed        | unexpected disconnect        |
-| Disconnecting | Idle          | teardown complete            |
-| Failed        | Connecting    | `connect()` retry            |
+| From          | To            | Trigger                   |
+|---------------|---------------|---------------------------|
+| idle          | connecting    | `connect()`               |
+| connecting    | connected     | transport success         |
+| connecting    | failed        | timeout / transport error |
+| connected     | disconnecting | `disconnect()`            |
+| connected     | failed        | unexpected disconnect     |
+| disconnecting | idle          | teardown complete         |
+| failed        | connecting    | `connect()` retry         |
 
 **Deliberately disallowed:**
-- `Connected → Connecting` — must disconnect first.
-- `Idle → Disconnecting` — nothing to tear down.
-- `Connecting → Disconnecting` — not supported in v1; cancel and retry instead.
+- `connected → connecting` — must disconnect first.
+- `idle → disconnecting` — nothing to tear down.
+- `connecting → disconnecting` — not supported in v1; cancel and retry instead.
 
 ---
 
 ## Lifecycle and Resource Handling
 
-The SDK does not manage its own lifecycle. The consumer (ViewModel on Android, ObservableObject on iOS) is responsible for calling `release()` when done.
+The SDK does not manage its own lifecycle. The consumer (`ObservableObject` / ViewModel) is responsible for calling `release()` when done.
 
 **Why the consumer controls lifecycle:**
-Some apps need the connection to stay alive when the screen is backgrounded — for example an app that monitors a device in the background. If the SDK shut itself down automatically, that use case would be impossible. Giving the consumer full control means they decide whether to tie the connector to a screen or keep it alive at the app level.
+Some apps need the connection to stay alive when the screen is backgrounded — for example an app that monitors a device in the background. If the SDK shut itself down automatically, that use case would be impossible. Giving the consumer full control means they decide whether to tie the connector to a view or keep it alive at the app level.
 
 **What happens in each scenario:**
-- Consumer calls `disconnect()` → graceful teardown, state goes to `Idle`.
-- Consumer forgets to call `release()` → the mock transport will eventually fire an `UnexpectedDisconnect`. A real transport would rely on OS-level socket teardown.
-- Process is killed → OS cleans up all threads and sockets. No persistent state exists.
-- App goes to background → connection stays alive until the consumer explicitly tears it down.
+- Consumer calls `disconnect()` → graceful teardown, state goes to `.idle`.
+- Consumer forgets to call `release()` → the mock transport will eventually fire an `.unexpectedDisconnect`. A real transport would rely on CoreBluetooth delegate teardown.
+- Process is killed → Swift's structured concurrency cancels all tasks naturally. No persistent state exists.
+- App goes to background → connection stays alive. The `ObservableObject` is not destroyed on background, so the connector keeps running. The consumer should decide in `deinit` or `.onDisappear` whether to disconnect or leave the connection alive.
 
 ---
 
-## v2 Changes
+## v2 Change
 
-Two things I would change in a v2 that I didn't do in v1:
+**Separate volume and battery into independent publishers.**
+Currently a battery update re-emits `DeviceData` with an unchanged volume, triggering an unnecessary SwiftUI view update for the volume component. In v2 I'd expose `var volumeState: AnyPublisher<Int, Never>` and `var batteryState: AnyPublisher<Int, Never>` separately.
 
-**1. Separate volume and battery into independent observables.**
-Currently a battery update re-emits `DeviceData` with an unchanged volume, triggering an unnecessary UI refresh for the volume component. In v2 I'd expose `volumeState: StateFlow<Int>` and `batteryState: StateFlow<Int>` separately.
 I didn't do this in v1 because the single `DeviceData` struct is simpler and perfectly adequate for a mock SDK. It's an optimization, not a correctness issue.
-
-**2. Add a built-in reconnection policy.**
-Currently if the device drops unexpectedly, the consumer has to observe `Failed` and manually call `connect()` again. In v2 I'd add an optional `autoReconnect: Boolean` parameter to `connect()`.
-I didn't do this in v1 to keep the consumer in full control of retry logic — some apps want to show a UI prompt before reconnecting, others want to reconnect silently. A built-in policy would need to be configurable enough to cover both, which adds complexity that wasn't justified for a mock SDK.
-
----
-
-## iOS Notes
-
-The design is identical. Platform-specific differences:
-
-| Concern | Android | iOS |
-|---|---|---|
-| Public API entry point | `interface DeviceConnector` + `companion object { fun create() }` | `protocol DeviceConnector` + `@MainActor func makeDeviceConnector()` (free function — Swift does not allow calling static methods on existential protocol types) |
-| Observation | `StateFlow<T>` | `AnyPublisher<T, Never>` backed by `CurrentValueSubject` |
-| Transport events | `Flow<TransportEvent>` | `AsyncStream<TransportEvent>` |
-| Main thread delivery | `Dispatchers.Main.immediate` | `@MainActor` on `DeviceConnectorImpl` |
-| Concurrency serialization | `Mutex` (kotlinx.coroutines) | `@MainActor` isolation (Swift structured concurrency) |
-| Error model | `Result<Unit>` | `Result<Void, Error>` |
-| Scope management | `CoroutineScope(SupervisorJob())` | `Task` tree, cancelled in `release()` |
